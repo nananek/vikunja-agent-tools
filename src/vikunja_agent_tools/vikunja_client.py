@@ -114,16 +114,17 @@ class VikunjaClient:
                 response = await self._client.request(
                     method, path, json=json_body, params=params
                 )
-            except httpx.TimeoutException as exc:
+            except httpx.RequestError as exc:
                 logger.warning(
-                    "vikunja request timeout method=%s path=%s attempt=%d",
+                    "vikunja request network error method=%s path=%s attempt=%d error=%s",
                     method,
                     path,
                     attempt,
+                    type(exc).__name__,
                 )
                 if attempt >= _MAX_RETRIES:
                     raise VikunjaAPIError(
-                        f"Vikunja API へのリクエストがタイムアウトしました: {method} {path}"
+                        f"Vikunja API への接続に失敗しました: {method} {path}"
                     ) from exc
                 await asyncio.sleep(_backoff_seconds(attempt))
                 continue

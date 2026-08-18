@@ -114,6 +114,16 @@ async def test_5xx_retries_then_raises_server_error(respx_mock, client):
     assert route.calls.call_count == 3
 
 
+async def test_connection_error_retries_then_raises_wrapped_error(respx_mock, client):
+    route = respx_mock.get(f"{API_ROOT}/tasks/1").mock(
+        side_effect=httpx.ConnectError("dns failure")
+    )
+    with pytest.raises(VikunjaAPIError) as exc_info:
+        await client.get_task(1)
+    assert route.calls.call_count == 3
+    assert "dns failure" not in str(exc_info.value)
+
+
 async def test_pagination_iterates_all_pages(respx_mock, client):
     route = respx_mock.get(f"{API_ROOT}/tasks/all")
 
