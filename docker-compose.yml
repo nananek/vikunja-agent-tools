@@ -1,0 +1,7 @@
+services:
+  vikunja-agent-tools:
+    build: .
+    env_file:
+      - .env
+    stdin_open: true
+    tty: false
