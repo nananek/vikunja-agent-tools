@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AgentStatus(StrEnum):
@@ -41,6 +41,21 @@ class VikunjaTask(BaseModel):
     labels: list[VikunjaLabel] = Field(default_factory=list)
     created: datetime | None = None
     updated: datetime | None = None
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def _normalize_zero_due_date(cls, value: object) -> object:
+        """Vikunja (Go実装) は未設定の due_date を null ではなく Go のゼロ値
+        (`0001-01-01T00:00:00Z` 等、タイムゾーン表記違いを含む) で返すことがある。
+        年が1以下の日時はすべて「未設定」として None に正規化する。"""
+        if isinstance(value, str) and value:
+            try:
+                parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                return value
+            if parsed.year <= 1:
+                return None
+        return value
 
 
 class TaskComment(BaseModel):

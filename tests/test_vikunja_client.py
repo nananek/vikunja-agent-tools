@@ -52,6 +52,34 @@ async def test_get_task(respx_mock, client):
     assert task.id == 42
 
 
+@pytest.mark.parametrize(
+    "zero_value",
+    ["0001-01-01T00:00:00Z", "0001-01-01T00:00:00+00:00", "0001-01-01T09:00:00+09:00"],
+)
+async def test_get_task_normalizes_go_zero_value_due_date_to_none(
+    respx_mock, client, zero_value
+):
+    respx_mock.get(f"{API_ROOT}/tasks/42").mock(
+        return_value=httpx.Response(
+            200, json={"id": 42, "title": "期限なし", "due_date": zero_value}
+        )
+    )
+    task = await client.get_task(42)
+    assert task.due_date is None
+
+
+async def test_get_task_keeps_real_due_date(respx_mock, client):
+    respx_mock.get(f"{API_ROOT}/tasks/42").mock(
+        return_value=httpx.Response(
+            200,
+            json={"id": 42, "title": "期限あり", "due_date": "2026-08-20T18:00:00Z"},
+        )
+    )
+    task = await client.get_task(42)
+    assert task.due_date is not None
+    assert task.due_date.year == 2026
+
+
 async def test_update_task(respx_mock, client):
     route = respx_mock.post(f"{API_ROOT}/tasks/42").mock(
         return_value=httpx.Response(200, json={"id": 42, "title": "更新後", "done": True})
