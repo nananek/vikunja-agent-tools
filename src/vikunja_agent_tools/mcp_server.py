@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, TypeVar
 
 from fastmcp import FastMCP
+from pydantic import ValidationError
 
 from vikunja_agent_tools import status as status_logic
 from vikunja_agent_tools.config import Settings, load_settings
@@ -71,6 +72,13 @@ def _handle_errors(func: _F) -> _F:
             )
             return exc.to_error_payload()
         except TaskServiceError as exc:
+            return {
+                "error": True,
+                "kind": "validation_error",
+                "status_code": None,
+                "message": str(exc),
+            }
+        except ValidationError as exc:
             return {
                 "error": True,
                 "kind": "validation_error",

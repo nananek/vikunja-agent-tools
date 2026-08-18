@@ -67,6 +67,15 @@ async def test_get_agent_task_not_found_returns_error_payload(configured):
     assert payload["kind"] == "not_found"
 
 
+async def test_create_agent_task_empty_title_returns_error_payload_not_raw_exception(
+    configured,
+):
+    async with Client(mcp_server.mcp) as client:
+        payload = await _call(client, "create_agent_task", title="")
+    assert payload["error"] is True
+    assert payload["kind"] == "validation_error"
+
+
 async def test_complete_and_dashboard_via_mcp_tools(configured):
     async with Client(mcp_server.mcp) as client:
         created = await _call(client, "create_agent_task", title="ダッシュボード用")
