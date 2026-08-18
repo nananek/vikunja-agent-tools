@@ -45,6 +45,26 @@ def test_diff_status_labels_removes_multiple_stale_status_labels():
     assert {label.id for label in to_remove} == {1, 2}
 
 
+def test_diff_agent_labels_adds_new_and_removes_old():
+    current = [
+        VikunjaLabel(id=1, title="agent-research-01"),
+        VikunjaLabel(id=2, title="status-running"),
+    ]
+    to_add, to_remove = status.diff_agent_labels(current, "coding-02", "agent-")
+    assert to_add == ["agent-coding-02"]
+    assert to_remove == [VikunjaLabel(id=1, title="agent-research-01")]
+
+
+def test_diff_agent_labels_is_idempotent_when_already_set():
+    current = [
+        VikunjaLabel(id=1, title="agent-research-01"),
+        VikunjaLabel(id=2, title="status-running"),
+    ]
+    to_add, to_remove = status.diff_agent_labels(current, "research-01", "agent-")
+    assert to_add == []
+    assert to_remove == []
+
+
 def test_meta_block_roundtrip():
     meta = AgentTaskMeta(
         agent_id="claude-code",

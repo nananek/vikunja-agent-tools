@@ -20,6 +20,7 @@ from vikunja_agent_tools.models import (
     DashboardResult,
     TaskComment,
     TaskSummary,
+    VikunjaLabel,
     VikunjaTask,
 )
 from vikunja_agent_tools.vikunja_client import VikunjaClient
@@ -47,9 +48,6 @@ class TaskService:
         self._settings = settings
 
     # -- 内部ヘルパー -----------------------------------------------------
-
-    def _agent_label(self, agent_id: str) -> str:
-        return f"{self._settings.vikunja_agent_label_prefix}{agent_id}"
 
     def _task_url(self, task_id: int) -> str:
         return f"{self._settings.base_url}/tasks/{task_id}"
@@ -92,23 +90,28 @@ class TaskService:
             return current_meta.execution_id
         return current_meta.execution_id if current_meta else None
 
+    async def _apply_label_diff(
+        self, task_id: int, to_add: list[str], to_remove: list[VikunjaLabel]
+    ) -> None:
+        for label in to_remove:
+            await self._client.remove_label_from_task(task_id, label.id)
+        for title in to_add:
+            label = await self._client.get_or_create_label(title)
+            await self._client.add_label_to_task(task_id, label.id)
+
     async def _apply_labels_and_meta(
         self, task: VikunjaTask, meta: AgentTaskMeta, *, agent_id: str | None
     ) -> VikunjaTask:
-        to_add, to_remove = status_logic.diff_status_labels(
+        status_add, status_remove = status_logic.diff_status_labels(
             task.labels, meta.status, self._settings.vikunja_status_label_prefix
         )
-        for label in to_remove:
-            await self._client.remove_label_from_task(task.id, label.id)
-        for title in to_add:
-            label = await self._client.get_or_create_label(title)
-            await self._client.add_label_to_task(task.id, label.id)
+        await self._apply_label_diff(task.id, status_add, status_remove)
 
         if agent_id is not None:
-            agent_label_title = self._agent_label(agent_id)
-            if not any(label.title == agent_label_title for label in task.labels):
-                label = await self._client.get_or_create_label(agent_label_title)
-                await self._client.add_label_to_task(task.id, label.id)
+            agent_add, agent_remove = status_logic.diff_agent_labels(
+                task.labels, agent_id, self._settings.vikunja_agent_label_prefix
+            )
+            await self._apply_label_diff(task.id, agent_add, agent_remove)
 
         new_description = status_logic.upsert_meta_block(task.description, meta)
         return await self._client.update_task(task.id, description=new_description)

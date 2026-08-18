@@ -53,6 +53,23 @@ def diff_status_labels(
     return to_add, to_remove
 
 
+def diff_agent_labels(
+    current_labels: Sequence[VikunjaLabel], new_agent_id: str, prefix: str
+) -> tuple[list[str], list[VikunjaLabel]]:
+    """``agent-*`` ラベルの追加/削除差分を計算する (状態ラベルと同じロジック)。
+
+    既存の ``{prefix}*`` ラベルは (新しい agent_id と同名のものを除いて) すべて削除対象にし、
+    新しい agent_id のラベルがまだ付いていなければ追加対象にする。担当エージェントの
+    付け替え時に古いラベルが残留しないようにするため、常に1つに絞り込む。
+    """
+    new_title = f"{prefix}{new_agent_id}"
+    agent_labels = [label for label in current_labels if label.title.startswith(prefix)]
+    already_present = any(label.title == new_title for label in agent_labels)
+    to_remove = [label for label in agent_labels if label.title != new_title]
+    to_add = [] if already_present else [new_title]
+    return to_add, to_remove
+
+
 def render_meta_block(meta: AgentTaskMeta) -> str:
     """`AgentTaskMeta` を HTML コメントで区切った JSON ブロックに直列化する。"""
     payload = json.dumps(

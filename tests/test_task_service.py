@@ -66,6 +66,23 @@ async def test_set_task_status_swaps_status_label_and_updates_meta(task_service)
     assert detail.meta.started_at is not None
 
 
+async def test_set_task_status_swaps_agent_label_when_agent_id_changes(task_service):
+    created = await task_service.create_task(
+        CreateTaskParams(title="タスク", agent_id="research-01")
+    )
+
+    await task_service.set_task_status(
+        created.task_id, AgentStatus.RUNNING, agent_id="coding-02"
+    )
+
+    detail = await task_service.get_task(created.task_id)
+    agent_labels = {
+        label.title for label in detail.task.labels if label.title.startswith("agent-")
+    }
+    assert agent_labels == {"agent-coding-02"}
+    assert detail.meta.agent_id == "coding-02"
+
+
 async def test_set_task_status_same_status_twice_is_idempotent(task_service):
     created = await task_service.create_task(CreateTaskParams(title="タスク"))
     await task_service.set_task_status(created.task_id, AgentStatus.RUNNING)
