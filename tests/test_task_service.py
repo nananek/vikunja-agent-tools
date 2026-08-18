@@ -183,6 +183,59 @@ async def test_execution_id_is_auto_generated_and_stable_until_new_run(task_serv
     assert third_detail.meta.execution_id != first_execution_id
 
 
+async def test_execution_id_preserved_when_resuming_from_blocked_or_needs_input(
+    task_service,
+):
+    created = await task_service.create_task(
+        CreateTaskParams(title="タスク", agent_id="claude-code")
+    )
+    await task_service.set_task_status(
+        created.task_id, AgentStatus.RUNNING, agent_id="claude-code"
+    )
+    first_execution_id = (await task_service.get_task(created.task_id)).meta.execution_id
+    assert first_execution_id
+
+    # blocked を経由して再開しても、同一実行の継続として execution_id は変わらない
+    await task_service.set_task_status(
+        created.task_id, AgentStatus.BLOCKED, agent_id="claude-code", message="依存タスク待ち"
+    )
+    blocked_detail = await task_service.get_task(created.task_id)
+    assert blocked_detail.meta.execution_id == first_execution_id
+
+    resumed = await task_service.set_task_status(
+        created.task_id, AgentStatus.RUNNING, agent_id="claude-code"
+    )
+    assert resumed.status == AgentStatus.RUNNING
+    resumed_detail = await task_service.get_task(created.task_id)
+    assert resumed_detail.meta.execution_id == first_execution_id
+
+    # needs-input を経由した場合も同様
+    await task_service.set_task_status(
+        created.task_id, AgentStatus.NEEDS_INPUT, agent_id="claude-code"
+    )
+    await task_service.set_task_status(
+        created.task_id, AgentStatus.RUNNING, agent_id="claude-code"
+    )
+    final_detail = await task_service.get_task(created.task_id)
+    assert final_detail.meta.execution_id == first_execution_id
+
+
+@pytest.mark.parametrize("terminal_status", [AgentStatus.COMPLETED, AgentStatus.FAILED])
+async def test_execution_id_regenerated_when_restarting_after_terminal_status(
+    task_service, terminal_status
+):
+    created = await task_service.create_task(CreateTaskParams(title="タスク"))
+    await task_service.set_task_status(created.task_id, AgentStatus.RUNNING)
+    first_execution_id = (await task_service.get_task(created.task_id)).meta.execution_id
+    assert first_execution_id
+
+    await task_service.set_task_status(created.task_id, terminal_status, message="終了")
+    await task_service.set_task_status(created.task_id, AgentStatus.RUNNING)
+
+    detail = await task_service.get_task(created.task_id)
+    assert detail.meta.execution_id != first_execution_id
+
+
 async def test_set_task_status_post_comment_false_skips_comment(task_service, fake_client):
     created = await task_service.create_task(CreateTaskParams(title="タスク"))
 

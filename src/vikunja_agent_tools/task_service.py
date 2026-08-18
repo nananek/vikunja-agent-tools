@@ -36,6 +36,9 @@ class TaskDetail:
 
 
 _TERMINAL_STATUSES = (AgentStatus.COMPLETED, AgentStatus.FAILED, AgentStatus.CANCELLED)
+# RUNNING への遷移が「新しい実行 (fresh start)」とみなされ、新規 execution_id が発行される
+# 直前の状態。blocked/needs-input からの再開は同一実行の継続とみなし、ここには含めない。
+_FRESH_START_STATUSES = (AgentStatus.QUEUED, *_TERMINAL_STATUSES)
 
 
 class TaskService:
@@ -80,8 +83,9 @@ class TaskService:
         if new_status == AgentStatus.RUNNING:
             is_fresh_start = (
                 current_meta is None
-                or current_meta.status != AgentStatus.RUNNING
                 or not current_meta.execution_id
+                or current_meta.status is None
+                or current_meta.status in _FRESH_START_STATUSES
             )
             if is_fresh_start:
                 return uuid.uuid4().hex
