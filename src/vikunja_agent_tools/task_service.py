@@ -149,7 +149,12 @@ class TaskService:
         max_items: int | None = None,
     ) -> list[TaskSummary]:
         effective_project_id = self._resolve_project_id(project_id)
-        tasks = await self._client.list_tasks(effective_project_id, max_items=max_items)
+        has_filter = agent_id is not None or status_filter is not None
+        # agent_id/status はタスク取得後にクライアント側でフィルタするため、フィルタがある場合に
+        # 生の取得件数を max_items で絞ると、フィルタ後の該当タスクを取りこぼす。フィルタがある
+        # ときは全件取得したうえでフィルタ後の件数を max_items で絞る。
+        fetch_limit = None if has_filter else max_items
+        tasks = await self._client.list_tasks(effective_project_id, max_items=fetch_limit)
 
         summaries: list[TaskSummary] = []
         for task in tasks:
@@ -159,6 +164,8 @@ class TaskService:
             if status_filter is not None and (meta is None or meta.status != status_filter):
                 continue
             summaries.append(self._to_summary(task, meta))
+            if has_filter and max_items is not None and len(summaries) >= max_items:
+                break
         return summaries
 
     async def get_task(self, task_id: int) -> TaskDetail:

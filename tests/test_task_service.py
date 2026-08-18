@@ -249,6 +249,24 @@ async def test_set_task_status_post_comment_false_skips_comment(task_service, fa
     assert last_comment_at is None
 
 
+async def test_list_tasks_max_items_applies_after_filtering_not_before(task_service):
+    # 先に非該当タスクを max_items 件以上作り、その後に該当タスクを作る。
+    # max_items がフィルタ前の生の取得件数に効いてしまうと、後から作った該当タスクが
+    # 取りこぼされてしまう。
+    for i in range(3):
+        await task_service.create_task(CreateTaskParams(title=f"他エージェント{i}", agent_id="other"))
+    matching_ids = []
+    for i in range(2):
+        created = await task_service.create_task(
+            CreateTaskParams(title=f"対象{i}", agent_id="claude-code")
+        )
+        matching_ids.append(created.task_id)
+
+    summaries = await task_service.list_tasks(agent_id="claude-code", max_items=2)
+
+    assert [s.task_id for s in summaries] == matching_ids
+
+
 async def test_get_dashboard_buckets_by_status_and_flags_stale_running(
     task_service, fake_client
 ):
