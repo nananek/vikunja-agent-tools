@@ -90,6 +90,8 @@ class Tools:
             f"タスク #{task.get('id')}: {task.get('title', '')}",
             f"状態: {meta.get('status', '(不明)')}",
             f"担当エージェント: {meta.get('agent_id') or '-'}",
+            f"開始日: {task.get('start_date') or '-'}",
+            f"期限: {task.get('due_date') or '-'}",
             f"完了: {'はい' if task.get('done') else 'いいえ'}",
             f"URL: {self.valves.VIKUNJA_BASE_URL.rstrip('/')}/tasks/{task.get('id')}",
         ])
@@ -125,16 +127,29 @@ class Tools:
         return self._summary(updated)
 
     async def create_task(self, title: str, description: str = "", project_id: int | None = None,
-                          priority: int | None = None, due_date: str = "", agent_id: str = "") -> str:
+                          priority: int | None = None, start_date: str = "", due_date: str = "", agent_id: str = "") -> str:
         """Vikunja にエージェントタスクを作成する。"""
         project = project_id or self.valves.VIKUNJA_PROJECT_ID
         if not project:
             return "入力エラー: project_id を指定するか Valves に VIKUNJA_PROJECT_ID を設定してください"
         body: dict[str, Any] = {"title": title, "description": description}
         if priority is not None: body["priority"] = priority
+        if start_date: body["start_date"] = start_date
         if due_date: body["due_date"] = due_date
         task = await self._request("PUT", f"/projects/{project}/tasks", body)
         return "タスクを作成しました。\n" + await self._set_status(task["id"], "queued", agent_id)
+
+    async def update_task(self, task_id: int, title: str = "", description: str = "",
+                          priority: int | None = None, start_date: str = "", due_date: str = "") -> str:
+        """既存タスクの内容、優先度、開始日、期限を更新する。"""
+        body: dict[str, Any] = {}
+        if title: body["title"] = title
+        if description: body["description"] = description
+        if priority is not None: body["priority"] = priority
+        if start_date: body["start_date"] = start_date
+        if due_date: body["due_date"] = due_date
+        task = await self._request("POST", f"/tasks/{task_id}", body)
+        return "タスクを更新しました。\n" + self._summary(task)
 
     async def list_tasks(self, project_id: int | None = None, agent_id: str = "", status: str = "", max_items: int = 20) -> str:
         """Vikunja のエージェントタスク一覧を取得する。"""
@@ -142,6 +157,11 @@ class Tools:
         tasks = await self._request("GET", path, query={"per_page": max_items})
         result = [t for t in tasks if (not agent_id or self._meta(t.get("description")).get("agent_id") == agent_id) and (not status or self._meta(t.get("description")).get("status") == status)]
         return "\n\n".join(self._summary(t) for t in result[:max_items]) or "該当するタスクはありません。"
+
+    async def list_projects(self) -> str:
+        """利用可能なVikunjaプロジェクトのIDと名称を一覧表示する。"""
+        projects = await self._request("GET", "/projects")
+        return "\n".join(f"#{project['id']}: {project['title']}" for project in projects) or "利用可能なプロジェクトはありません。"
 
     async def show_task(self, task_id: int) -> str:
         """Vikunja タスクの詳細を表示する。"""

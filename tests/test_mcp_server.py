@@ -8,7 +8,9 @@ from vikunja_agent_tools import mcp_server
 EXPECTED_TOOL_NAMES = {
     "create_agent_task",
     "list_agent_tasks",
+    "list_vikunja_projects",
     "get_agent_task",
+    "update_agent_task",
     "start_agent_task",
     "report_agent_progress",
     "heartbeat_agent_task",
@@ -58,6 +60,12 @@ async def test_create_and_start_task_via_mcp_tools(configured):
         fetched = await _call(client, "get_agent_task", task_id=created["task_id"])
         assert fetched["meta"]["status"] == "running"
         assert fetched["meta"]["execution_id"]
+
+
+async def test_list_projects_via_mcp_tool(configured):
+    async with Client(mcp_server.mcp) as client:
+        result = await _call(client, "list_vikunja_projects")
+    assert result["projects"] == [{"id": 1, "title": "資格学習"}]
 
 
 async def test_get_agent_task_not_found_returns_error_payload(configured):

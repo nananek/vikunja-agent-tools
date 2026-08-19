@@ -15,7 +15,7 @@ from typing import Any
 
 import httpx
 
-from vikunja_agent_tools.models import TaskComment, VikunjaLabel, VikunjaTask
+from vikunja_agent_tools.models import TaskComment, VikunjaLabel, VikunjaProject, VikunjaTask
 
 logger = logging.getLogger("vikunja_agent_tools.client")
 
@@ -222,6 +222,10 @@ class VikunjaClient:
         path = f"/projects/{project_id}/tasks" if project_id is not None else "/tasks/all"
         raw_items = await self.list_all_pages(path, max_items=max_items)
         return [VikunjaTask.model_validate(item) for item in raw_items]
+
+    async def list_projects(self) -> list[VikunjaProject]:
+        raw_items = await self.list_all_pages("/projects")
+        return [VikunjaProject.model_validate(item) for item in raw_items]
 
     async def list_comments(self, task_id: int) -> list[TaskComment]:
         response = await self._request("GET", f"/tasks/{task_id}/comments")

@@ -21,6 +21,7 @@ from vikunja_agent_tools.models import (
     TaskComment,
     TaskSummary,
     VikunjaLabel,
+    VikunjaProject,
     VikunjaTask,
 )
 from vikunja_agent_tools.vikunja_client import VikunjaClient
@@ -66,6 +67,7 @@ class TaskService:
             agent_id=meta.agent_id if meta else None,
             url=self._task_url(task.id),
             priority=task.priority,
+            start_date=task.start_date,
             due_date=task.due_date,
             done=task.done,
         )
@@ -128,6 +130,8 @@ class TaskService:
         extra_fields: dict[str, object] = {}
         if params.priority is not None:
             extra_fields["priority"] = params.priority
+        if params.start_date is not None:
+            extra_fields["start_date"] = params.start_date.isoformat()
         if params.due_date is not None:
             extra_fields["due_date"] = params.due_date.isoformat()
 
@@ -171,6 +175,10 @@ class TaskService:
                 break
         return summaries
 
+    async def list_projects(self) -> list[VikunjaProject]:
+        """利用可能なプロジェクトをIDと名称付きで取得する。"""
+        return await self._client.list_projects()
+
     async def get_task(self, task_id: int) -> TaskDetail:
         task = await self._client.get_task(task_id)
         meta = status_logic.parse_meta_block(task.description)
@@ -188,6 +196,7 @@ class TaskService:
         title: str | None = None,
         description: str | None = None,
         priority: int | None = None,
+        start_date: datetime | None = None,
         due_date: datetime | None = None,
     ) -> TaskSummary:
         fields: dict[str, object] = {}
@@ -195,6 +204,8 @@ class TaskService:
             fields["title"] = title
         if priority is not None:
             fields["priority"] = priority
+        if start_date is not None:
+            fields["start_date"] = start_date.isoformat()
         if due_date is not None:
             fields["due_date"] = due_date.isoformat()
 

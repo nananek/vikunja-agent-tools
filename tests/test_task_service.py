@@ -23,6 +23,24 @@ async def test_create_task_sets_queued_status_and_agent_label(task_service, fake
     assert detail.meta.status == AgentStatus.QUEUED
 
 
+async def test_create_and_update_task_dates(task_service):
+    start_date = datetime(2026, 8, 20, 9, tzinfo=timezone.utc)
+    due_date = datetime(2026, 8, 21, 18, tzinfo=timezone.utc)
+    created = await task_service.create_task(
+        CreateTaskParams(title="日付付き", start_date=start_date, due_date=due_date)
+    )
+
+    detail = await task_service.get_task(created.task_id)
+    assert detail.task.start_date == start_date
+    assert detail.task.due_date == due_date
+
+    new_due_date = datetime(2026, 8, 22, 18, tzinfo=timezone.utc)
+    await task_service.update_task(created.task_id, due_date=new_due_date)
+    updated = await task_service.get_task(created.task_id)
+    assert updated.task.start_date == start_date
+    assert updated.task.due_date == new_due_date
+
+
 async def test_create_task_uses_project_id_fallback_from_settings(fake_client):
     settings = Settings(
         vikunja_base_url="https://vikunja.example.com",

@@ -96,6 +96,7 @@ async def create_agent_task(
     description: str | None = None,
     project_id: int | None = None,
     priority: int | None = None,
+    start_date: datetime | None = None,
     due_date: datetime | None = None,
     agent_id: str | None = None,
 ) -> dict[str, Any]:
@@ -106,10 +107,33 @@ async def create_agent_task(
         description=description,
         project_id=project_id,
         priority=priority,
+        start_date=start_date,
         due_date=due_date,
         agent_id=agent_id,
     )
     summary = await task_service.create_task(params)
+    return _summary_dict(summary)
+
+
+@mcp.tool()
+@_handle_errors
+async def update_agent_task(
+    task_id: int,
+    title: str | None = None,
+    description: str | None = None,
+    priority: int | None = None,
+    start_date: datetime | None = None,
+    due_date: datetime | None = None,
+) -> dict[str, Any]:
+    """既存タスクの内容、優先度、開始日、期限を更新する。"""
+    summary = await _get_task_service().update_task(
+        task_id,
+        title=title,
+        description=description,
+        priority=priority,
+        start_date=start_date,
+        due_date=due_date,
+    )
     return _summary_dict(summary)
 
 
@@ -130,6 +154,14 @@ async def list_agent_tasks(
         max_items=max_items,
     )
     return {"tasks": [_summary_dict(s) for s in summaries], "count": len(summaries)}
+
+
+@mcp.tool()
+@_handle_errors
+async def list_vikunja_projects() -> dict[str, Any]:
+    """利用可能なVikunjaプロジェクトのIDと名称を一覧取得する。"""
+    projects = await _get_task_service().list_projects()
+    return {"projects": [project.model_dump(mode="json") for project in projects]}
 
 
 @mcp.tool()

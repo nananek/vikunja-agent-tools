@@ -19,6 +19,11 @@ async def test_create_and_list_tasks(tools):
     assert "部屋の掃除" in listed
 
 
+async def test_list_projects(tools):
+    projects = await tools.list_projects()
+    assert projects == "#1: 資格学習"
+
+
 async def test_start_and_show_task(tools):
     created = await tools.create_task(title="レポート作成")
     task_id = int(created.splitlines()[1].split("#")[1].split(":")[0])

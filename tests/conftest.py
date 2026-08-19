@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import pytest
 
 from vikunja_agent_tools.config import Settings
-from vikunja_agent_tools.models import TaskComment, VikunjaLabel, VikunjaTask
+from vikunja_agent_tools.models import TaskComment, VikunjaLabel, VikunjaProject, VikunjaTask
 from vikunja_agent_tools.task_service import TaskService
 from vikunja_agent_tools.vikunja_client import VikunjaNotFoundError
 
@@ -82,6 +82,9 @@ class FakeVikunjaClient:
         if max_items is not None:
             items = items[:max_items]
         return items
+
+    async def list_projects(self) -> list[VikunjaProject]:
+        return [VikunjaProject(id=1, title="資格学習")]
 
     async def list_comments(self, task_id: int) -> list[TaskComment]:
         return list(self._comments.get(task_id, []))

@@ -28,6 +28,13 @@ class VikunjaLabel(BaseModel):
     hex_color: str | None = None
 
 
+class VikunjaProject(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    title: str
+
+
 class VikunjaTask(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -36,16 +43,17 @@ class VikunjaTask(BaseModel):
     description: str | None = None
     done: bool = False
     priority: int | None = None
+    start_date: datetime | None = None
     due_date: datetime | None = None
     project_id: int | None = None
     labels: list[VikunjaLabel] = Field(default_factory=list)
     created: datetime | None = None
     updated: datetime | None = None
 
-    @field_validator("due_date", mode="before")
+    @field_validator("start_date", "due_date", mode="before")
     @classmethod
-    def _normalize_zero_due_date(cls, value: object) -> object:
-        """Vikunja (Go実装) は未設定の due_date を null ではなく Go のゼロ値
+    def _normalize_zero_date(cls, value: object) -> object:
+        """Vikunja (Go実装) は未設定の日付を null ではなく Go のゼロ値
         (`0001-01-01T00:00:00Z` 等、タイムゾーン表記違いを含む) で返すことがある。
         年が1以下の日時はすべて「未設定」として None に正規化する。"""
         if isinstance(value, str) and value:
@@ -85,6 +93,7 @@ class CreateTaskParams(BaseModel):
     description: str | None = None
     project_id: int | None = None
     priority: int | None = None
+    start_date: datetime | None = None
     due_date: datetime | None = None
     agent_id: str | None = None
 
@@ -98,6 +107,7 @@ class TaskSummary(BaseModel):
     agent_id: str | None = None
     url: str | None = None
     priority: int | None = None
+    start_date: datetime | None = None
     due_date: datetime | None = None
     done: bool = False
 

@@ -54,6 +54,7 @@ def _format_summary(summary: TaskSummary) -> str:
         f"状態: {summary.status.value if summary.status else '(不明)'}",
         f"担当エージェント: {summary.agent_id or '-'}",
         f"優先度: {summary.priority if summary.priority is not None else '-'}",
+        f"開始日: {summary.start_date.isoformat() if summary.start_date else '-'}",
         f"期限: {summary.due_date.isoformat() if summary.due_date else '-'}",
         f"完了: {'はい' if summary.done else 'いいえ'}",
         f"URL: {summary.url or '-'}",
@@ -65,6 +66,8 @@ def _format_detail(detail: TaskDetail) -> str:
     lines = [
         f"タスク #{detail.task.id}: {detail.task.title}",
         f"完了: {'はい' if detail.task.done else 'いいえ'}",
+        f"開始日: {detail.task.start_date.isoformat() if detail.task.start_date else '-'}",
+        f"期限: {detail.task.due_date.isoformat() if detail.task.due_date else '-'}",
     ]
     if detail.meta:
         lines.append(f"状態: {detail.meta.status.value if detail.meta.status else '(不明)'}")
@@ -114,6 +117,7 @@ class Tools:
         description: str = "",
         project_id: int | None = None,
         priority: int | None = None,
+        start_date: str = "",
         due_date: str = "",
         agent_id: str = "",
     ) -> str:
@@ -123,6 +127,7 @@ class Tools:
         :param description: タスクの説明文 (省略可)
         :param project_id: 作成先のプロジェクト ID。省略時は環境変数の既定値を使う
         :param priority: 優先度 (Vikunja の優先度値。省略可)
+        :param start_date: 開始日時 (ISO8601形式の文字列。省略可)
         :param due_date: 期限日時 (ISO8601形式の文字列。例: 2026-08-20T18:00:00+09:00)
         :param agent_id: このタスクを担当するエージェントの識別子 (省略可)
         :return: 作成結果を日本語でまとめたテキスト
@@ -132,11 +137,33 @@ class Tools:
             description=description or None,
             project_id=project_id,
             priority=priority,
+            start_date=_parse_due_date(start_date),
             due_date=_parse_due_date(due_date),
             agent_id=agent_id or None,
         )
         summary = await self._task_service.create_task(params)
         return f"タスクを作成しました。\n{_format_summary(summary)}"
+
+    @_handle_errors
+    async def update_task(
+        self,
+        task_id: int,
+        title: str = "",
+        description: str = "",
+        priority: int | None = None,
+        start_date: str = "",
+        due_date: str = "",
+    ) -> str:
+        """既存タスクの内容、優先度、開始日、期限を更新する。"""
+        summary = await self._task_service.update_task(
+            task_id,
+            title=title or None,
+            description=description or None,
+            priority=priority,
+            start_date=_parse_due_date(start_date),
+            due_date=_parse_due_date(due_date),
+        )
+        return f"タスクを更新しました。\n{_format_summary(summary)}"
 
     @_handle_errors
     async def list_tasks(
@@ -164,6 +191,14 @@ class Tools:
         if not summaries:
             return "該当するタスクはありません。"
         return "\n\n".join(_format_summary(summary) for summary in summaries)
+
+    @_handle_errors
+    async def list_projects(self) -> str:
+        """利用可能なVikunjaプロジェクトのIDと名称を一覧表示する。"""
+        projects = await self._task_service.list_projects()
+        if not projects:
+            return "利用可能なプロジェクトはありません。"
+        return "\n".join(f"#{project.id}: {project.title}" for project in projects)
 
     @_handle_errors
     async def show_task(self, task_id: int) -> str:
