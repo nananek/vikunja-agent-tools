@@ -143,11 +143,11 @@ stale running 判定の閾値 (`VIKUNJA_STALE_RUNNING_MINUTES`、既定 30 分) 
 
 1. Open WebUI の管理画面 → **Workspace** → **Tools** を開く。
 2. 「+」ボタンから新しい Tool を作成する。
-3. `src/vikunja_agent_tools/openwebui_tools.py` の内容をそのままコピーして、エディタに貼り付ける。
+3. リポジトリ直下の `openwebui_tool.py` の内容をそのままコピーして、エディタに貼り付ける。
 4. Tool 名を `vikunja-agent-tools` など分かりやすい名前にして保存する。
-5. `openwebui_tools.py` は `Valves` ではなく環境変数 (`.env.example` と同じ7変数) を直接読むため、
-   Open WebUI を起動しているプロセス/コンテナ自体に `VIKUNJA_BASE_URL` / `VIKUNJA_API_TOKEN` 等を
-   設定し、Open WebUI を再起動する。
+5. Tool の Valves に `VIKUNJA_BASE_URL`、`VIKUNJA_API_TOKEN`、必要なら
+   `VIKUNJA_PROJECT_ID` を設定する。貼り付けるファイルは標準ライブラリだけで完結しており、
+   このリポジトリの Python パッケージや Docker ネットワークには依存しない。
 6. 使いたいモデル/チャットの設定画面でこの Tool を有効化する。
 
 ## AI エージェント運用ルール
@@ -229,7 +229,7 @@ docker compose run --rm -T vikunja-agent-tools
 ```
 
 `docker-compose.yml` は `.env` を `env_file` として読み込む1サービス構成。Docker イメージの主目的は
-MCP サーバー (`vikunja-mcp`, stdio) の起動であり、Open WebUI 側の Tool (`openwebui_tools.py`) は
+MCP サーバー (`vikunja-mcp`, stdio) の起動であり、Open WebUI 側の Tool (`openwebui_tool.py`) は
 Open WebUI の管理画面に直接貼り付けて使う運用を想定している。
 
 ## License
