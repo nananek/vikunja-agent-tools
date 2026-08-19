@@ -1,10 +1,11 @@
-"""Vikunja tool for Open WebUI.
-
-Paste this file into Workspace -> Tools.  It intentionally has no imports from
-this repository and uses only Python's standard library.
 """
-
-from __future__ import annotations
+title: Vikunja Agent Tools
+author: nananek
+version: 0.1.1
+license: MIT
+description: Create and manage Vikunja tasks from Open WebUI.
+requirements: pydantic
+"""
 
 import asyncio
 import json
@@ -16,15 +17,17 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 
 class Tools:
-    class Valves:
-        VIKUNJA_BASE_URL: str = ""
-        VIKUNJA_API_TOKEN: str = ""
-        VIKUNJA_PROJECT_ID: int | None = None
-        VIKUNJA_TIMEOUT_SECONDS: float = 15.0
-        VIKUNJA_AGENT_LABEL_PREFIX: str = "agent-"
-        VIKUNJA_STATUS_LABEL_PREFIX: str = "status-"
+    class Valves(BaseModel):
+        VIKUNJA_BASE_URL: str = Field(default="", description="Vikunja base URL")
+        VIKUNJA_API_TOKEN: str = Field(default="", description="Vikunja API token")
+        VIKUNJA_PROJECT_ID: int | None = Field(default=None, description="Default project ID")
+        VIKUNJA_TIMEOUT_SECONDS: float = Field(default=15.0, description="API timeout")
+        VIKUNJA_AGENT_LABEL_PREFIX: str = Field(default="agent-", description="Agent label prefix")
+        VIKUNJA_STATUS_LABEL_PREFIX: str = Field(default="status-", description="Status label prefix")
 
     def __init__(self) -> None:
         self.valves = self.Valves()

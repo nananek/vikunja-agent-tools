@@ -146,8 +146,8 @@ stale running 判定の閾値 (`VIKUNJA_STALE_RUNNING_MINUTES`、既定 30 分) 
 3. リポジトリ直下の `openwebui_tool.py` の内容をそのままコピーして、エディタに貼り付ける。
 4. Tool 名を `vikunja-agent-tools` など分かりやすい名前にして保存する。
 5. Tool の Valves に `VIKUNJA_BASE_URL`、`VIKUNJA_API_TOKEN`、必要なら
-   `VIKUNJA_PROJECT_ID` を設定する。貼り付けるファイルは標準ライブラリだけで完結しており、
-   このリポジトリの Python パッケージや Docker ネットワークには依存しない。
+   `VIKUNJA_PROJECT_ID` を設定する。貼り付けるファイルは Open WebUI に組み込まれている
+   `pydantic` 以外の依存がなく、このリポジトリの Python パッケージや Docker ネットワークには依存しない。
 6. 使いたいモデル/チャットの設定画面でこの Tool を有効化する。
 
 ## AI エージェント運用ルール
