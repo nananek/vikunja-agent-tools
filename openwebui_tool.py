@@ -90,6 +90,7 @@ class Tools:
             f"タスク #{task.get('id')}: {task.get('title', '')}",
             f"状態: {meta.get('status', '(不明)')}",
             f"担当エージェント: {meta.get('agent_id') or '-'}",
+            f"進捗率: {float(task['percent_done']) * 100:.1f}%" if task.get("percent_done") is not None else "進捗率: -",
             f"開始日: {task.get('start_date') or '-'}",
             f"期限: {task.get('due_date') or '-'}",
             f"完了: {'はい' if task.get('done') else 'いいえ'}",
@@ -127,25 +128,29 @@ class Tools:
         return self._summary(updated)
 
     async def create_task(self, title: str, description: str = "", project_id: int | None = None,
-                          priority: int | None = None, start_date: str = "", due_date: str = "", agent_id: str = "") -> str:
+                          priority: int | None = None, percent_done: float | None = None,
+                          start_date: str = "", due_date: str = "", agent_id: str = "") -> str:
         """Vikunja にエージェントタスクを作成する。"""
         project = project_id or self.valves.VIKUNJA_PROJECT_ID
         if not project:
             return "入力エラー: project_id を指定するか Valves に VIKUNJA_PROJECT_ID を設定してください"
         body: dict[str, Any] = {"title": title, "description": description}
         if priority is not None: body["priority"] = priority
+        if percent_done is not None: body["percent_done"] = percent_done
         if start_date: body["start_date"] = start_date
         if due_date: body["due_date"] = due_date
         task = await self._request("PUT", f"/projects/{project}/tasks", body)
         return "タスクを作成しました。\n" + await self._set_status(task["id"], "queued", agent_id)
 
     async def update_task(self, task_id: int, title: str = "", description: str = "",
-                          priority: int | None = None, start_date: str = "", due_date: str = "") -> str:
+                          priority: int | None = None, percent_done: float | None = None,
+                          start_date: str = "", due_date: str = "") -> str:
         """既存タスクの内容、優先度、開始日、期限を更新する。"""
         body: dict[str, Any] = {}
         if title: body["title"] = title
         if description: body["description"] = description
         if priority is not None: body["priority"] = priority
+        if percent_done is not None: body["percent_done"] = percent_done
         if start_date: body["start_date"] = start_date
         if due_date: body["due_date"] = due_date
         task = await self._request("POST", f"/tasks/{task_id}", body)

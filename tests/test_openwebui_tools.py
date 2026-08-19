@@ -24,6 +24,14 @@ async def test_list_projects(tools):
     assert projects == "#1: 資格学習"
 
 
+async def test_update_task_percent_done(tools):
+    created = await tools.create_task(title="進捗更新")
+    task_id = int(created.splitlines()[1].split("#")[1].split(":")[0])
+
+    updated = await tools.update_task(task_id, percent_done=0.14)
+    assert "進捗率: 14.0%" in updated
+
+
 async def test_start_and_show_task(tools):
     created = await tools.create_task(title="レポート作成")
     task_id = int(created.splitlines()[1].split("#")[1].split(":")[0])

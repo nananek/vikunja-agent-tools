@@ -43,6 +43,7 @@ class VikunjaTask(BaseModel):
     description: str | None = None
     done: bool = False
     priority: int | None = None
+    percent_done: float | None = Field(default=None, ge=0, le=1)
     start_date: datetime | None = None
     due_date: datetime | None = None
     project_id: int | None = None
@@ -93,6 +94,7 @@ class CreateTaskParams(BaseModel):
     description: str | None = None
     project_id: int | None = None
     priority: int | None = None
+    percent_done: float | None = Field(default=None, ge=0, le=1)
     start_date: datetime | None = None
     due_date: datetime | None = None
     agent_id: str | None = None
@@ -107,6 +109,7 @@ class TaskSummary(BaseModel):
     agent_id: str | None = None
     url: str | None = None
     priority: int | None = None
+    percent_done: float | None = Field(default=None, ge=0, le=1)
     start_date: datetime | None = None
     due_date: datetime | None = None
     done: bool = False

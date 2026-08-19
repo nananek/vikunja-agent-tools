@@ -41,6 +41,16 @@ async def test_create_and_update_task_dates(task_service):
     assert updated.task.due_date == new_due_date
 
 
+async def test_create_and_update_task_percent_done(task_service):
+    created = await task_service.create_task(
+        CreateTaskParams(title="進捗付き", percent_done=0.14)
+    )
+    assert created.percent_done == 0.14
+
+    updated = await task_service.update_task(created.task_id, percent_done=0.5)
+    assert updated.percent_done == 0.5
+
+
 async def test_create_task_uses_project_id_fallback_from_settings(fake_client):
     settings = Settings(
         vikunja_base_url="https://vikunja.example.com",

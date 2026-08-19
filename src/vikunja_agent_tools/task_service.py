@@ -67,6 +67,7 @@ class TaskService:
             agent_id=meta.agent_id if meta else None,
             url=self._task_url(task.id),
             priority=task.priority,
+            percent_done=task.percent_done,
             start_date=task.start_date,
             due_date=task.due_date,
             done=task.done,
@@ -130,6 +131,8 @@ class TaskService:
         extra_fields: dict[str, object] = {}
         if params.priority is not None:
             extra_fields["priority"] = params.priority
+        if params.percent_done is not None:
+            extra_fields["percent_done"] = params.percent_done
         if params.start_date is not None:
             extra_fields["start_date"] = params.start_date.isoformat()
         if params.due_date is not None:
@@ -196,6 +199,7 @@ class TaskService:
         title: str | None = None,
         description: str | None = None,
         priority: int | None = None,
+        percent_done: float | None = None,
         start_date: datetime | None = None,
         due_date: datetime | None = None,
     ) -> TaskSummary:
@@ -204,6 +208,8 @@ class TaskService:
             fields["title"] = title
         if priority is not None:
             fields["priority"] = priority
+        if percent_done is not None:
+            fields["percent_done"] = percent_done
         if start_date is not None:
             fields["start_date"] = start_date.isoformat()
         if due_date is not None:

@@ -96,6 +96,7 @@ async def create_agent_task(
     description: str | None = None,
     project_id: int | None = None,
     priority: int | None = None,
+    percent_done: float | None = None,
     start_date: datetime | None = None,
     due_date: datetime | None = None,
     agent_id: str | None = None,
@@ -107,6 +108,7 @@ async def create_agent_task(
         description=description,
         project_id=project_id,
         priority=priority,
+        percent_done=percent_done,
         start_date=start_date,
         due_date=due_date,
         agent_id=agent_id,
@@ -122,6 +124,7 @@ async def update_agent_task(
     title: str | None = None,
     description: str | None = None,
     priority: int | None = None,
+    percent_done: float | None = None,
     start_date: datetime | None = None,
     due_date: datetime | None = None,
 ) -> dict[str, Any]:
@@ -131,6 +134,7 @@ async def update_agent_task(
         title=title,
         description=description,
         priority=priority,
+        percent_done=percent_done,
         start_date=start_date,
         due_date=due_date,
     )

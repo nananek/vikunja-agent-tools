@@ -54,6 +54,7 @@ def _format_summary(summary: TaskSummary) -> str:
         f"状態: {summary.status.value if summary.status else '(不明)'}",
         f"担当エージェント: {summary.agent_id or '-'}",
         f"優先度: {summary.priority if summary.priority is not None else '-'}",
+        f"進捗率: {summary.percent_done * 100:.1f}%" if summary.percent_done is not None else "進捗率: -",
         f"開始日: {summary.start_date.isoformat() if summary.start_date else '-'}",
         f"期限: {summary.due_date.isoformat() if summary.due_date else '-'}",
         f"完了: {'はい' if summary.done else 'いいえ'}",
@@ -66,6 +67,7 @@ def _format_detail(detail: TaskDetail) -> str:
     lines = [
         f"タスク #{detail.task.id}: {detail.task.title}",
         f"完了: {'はい' if detail.task.done else 'いいえ'}",
+        f"進捗率: {detail.task.percent_done * 100:.1f}%" if detail.task.percent_done is not None else "進捗率: -",
         f"開始日: {detail.task.start_date.isoformat() if detail.task.start_date else '-'}",
         f"期限: {detail.task.due_date.isoformat() if detail.task.due_date else '-'}",
     ]
@@ -117,6 +119,7 @@ class Tools:
         description: str = "",
         project_id: int | None = None,
         priority: int | None = None,
+        percent_done: float | None = None,
         start_date: str = "",
         due_date: str = "",
         agent_id: str = "",
@@ -127,6 +130,7 @@ class Tools:
         :param description: タスクの説明文 (省略可)
         :param project_id: 作成先のプロジェクト ID。省略時は環境変数の既定値を使う
         :param priority: 優先度 (Vikunja の優先度値。省略可)
+        :param percent_done: 進捗率 (0.0〜1.0。14%なら0.14。省略可)
         :param start_date: 開始日時 (ISO8601形式の文字列。省略可)
         :param due_date: 期限日時 (ISO8601形式の文字列。例: 2026-08-20T18:00:00+09:00)
         :param agent_id: このタスクを担当するエージェントの識別子 (省略可)
@@ -137,6 +141,7 @@ class Tools:
             description=description or None,
             project_id=project_id,
             priority=priority,
+            percent_done=percent_done,
             start_date=_parse_due_date(start_date),
             due_date=_parse_due_date(due_date),
             agent_id=agent_id or None,
@@ -151,6 +156,7 @@ class Tools:
         title: str = "",
         description: str = "",
         priority: int | None = None,
+        percent_done: float | None = None,
         start_date: str = "",
         due_date: str = "",
     ) -> str:
@@ -160,6 +166,7 @@ class Tools:
             title=title or None,
             description=description or None,
             priority=priority,
+            percent_done=percent_done,
             start_date=_parse_due_date(start_date),
             due_date=_parse_due_date(due_date),
         )
